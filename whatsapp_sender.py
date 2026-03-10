@@ -40,9 +40,12 @@ except ImportError:
     MISSING_DEPS.append("openpyxl")
 
 try:
-    import pywhatkit
+    import pyautogui
 except ImportError:
-    MISSING_DEPS.append("pywhatkit")
+    MISSING_DEPS.append("pyautogui")
+
+import webbrowser
+import urllib.parse
 
 if MISSING_DEPS:
     print(f"Missing dependencies: {', '.join(MISSING_DEPS)}")
@@ -56,7 +59,7 @@ from database import init_db, insert_record, update_record, get_all_records, get
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(SCRIPT_DIR, "config.txt")
 DEFAULT_INPUT = os.path.join(SCRIPT_DIR, "contacts.xlsx")
-DELAY_BETWEEN_MESSAGES = 15
+DELAY_BETWEEN_MESSAGES = 20
 MAX_RETRIES = 2
 
 # Status constants (single source of truth)
@@ -230,7 +233,8 @@ def classify_error(error_msg):
 
 def send_message(phone, message, dry_run=False, retries=MAX_RETRIES):
     """
-    Send a WhatsApp message with retry logic.
+    Send a WhatsApp message using WhatsApp Web API URL + pyautogui.
+    Opens browser → waits for load → presses Enter → closes tab.
     Returns (status, error_details)
     """
     if dry_run:
@@ -239,20 +243,27 @@ def send_message(phone, message, dry_run=False, retries=MAX_RETRIES):
     last_error = None
     for attempt in range(1, retries + 1):
         try:
-            pywhatkit.sendwhatmsg_instantly(
-                phone_no=phone,
-                message=message,
-                wait_time=15,
-                tab_close=True,
-                close_time=5,
-            )
+            # Build WhatsApp Web API URL with pre-filled message
+            encoded_msg = urllib.parse.quote(message)
+            url = f"https://web.whatsapp.com/send?phone={phone}&text={encoded_msg}"
+
+            # Open in browser
+            webbrowser.open(url)
+
+            # Wait for WhatsApp Web to fully load and populate the message box
+            time.sleep(20)
+
+            # Press Enter to send the message
+            pyautogui.press("enter")
+
+            # Wait for message to actually send
+            time.sleep(5)
+
+            # Close the browser tab
+            pyautogui.hotkey("ctrl", "w")
+            time.sleep(2)
+
             return STATUS_SENT, None
-
-        except pywhatkit.core.exceptions.CountryCodeException:
-            return STATUS_FAILED, "Invalid country code"
-
-        except pywhatkit.core.exceptions.CallTimeException:
-            return STATUS_FAILED, "Call time error"
 
         except Exception as e:
             last_error = str(e)
