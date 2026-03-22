@@ -83,3 +83,10 @@ def get_summary(batch_id):
             (batch_id,)
         ).fetchall()
         return {row["status"]: row["count"] for row in rows}
+
+
+def get_completed_phones():
+    """Get all phone numbers that shouldn't be retried (e.g. Sent, No WhatsApp)."""
+    with get_connection() as conn:
+        rows = conn.execute("SELECT DISTINCT phone FROM messages WHERE status IN ('Sent', 'No WhatsApp')").fetchall()
+        return {row["phone"] for row in rows}

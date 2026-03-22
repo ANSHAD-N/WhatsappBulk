@@ -1,0 +1,12 @@
+﻿============================================================
+   WhatsApp Bulk Message Sender (Selenium)
+============================================================
+
+Message: "Hello! This is a test message from WhatsApp Bulk Sender. Thank you!"
+Loaded 1 contacts from: test_single.xlsx
+Batch: 8d7ffcda
+------------------------------------------------------------
+Starting Chrome browser...
+Opening WhatsApp Web...
+Waiting for WhatsApp Web to load (scan QR code if prompted)...
+ERROR: WhatsApp Web did not load in 60 seconds. Please scan QR code and try again.
